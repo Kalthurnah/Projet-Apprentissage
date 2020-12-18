@@ -1,10 +1,13 @@
 setwd(" ....")
 require(jsonlite) 
+require(data.table)
+
 #lecture des données
 train<-read.csv("train.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 test<-read.csv("test.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 # création d'une colonne indicatrice train test avant assemblage des deux tables
-train$datasplit<-"train" ; test$datasplit<-"test"
+train$datasplit<-"train" 
+test$datasplit<-"test"
 # suppression d'une colonne visiblement inutile
 train$campaignCode<-NULL ; test$campaignCode<-NULL
 # identification des 4 colonnes au format json
@@ -23,3 +26,14 @@ for (t in tables) {
   glob<-rbind(glob,result)
 }
 rm(partiel, train, test) ; gc()
+
+
+
+summary(train)
+colnames(train)
+head(train,5)
+
+# On converti le format date qui ne convient pas
+train$new_date <- as.Date(as.character(train$date), "%Y%m%d")
+summary(train)
+
