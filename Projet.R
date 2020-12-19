@@ -1,16 +1,34 @@
-setwd("D:/ESILV/5A/Apprentissage")
+
+setwd("")
 
 require(jsonlite) 
 require(data.table)
+library(caTools)
 #lecture des donneees
 train<-read.csv("train.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 test<-read.csv("test.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 
-# création d'une colonne indicatrice train test avant assemblage des deux tables
-train$datasplit<-"train" ; test$datasplit<-"test"
+#on rÃ©duit le dataset pour diminuer les temps d'importation
+nrow(train)
+nrow(test)
+smp_size1 <- floor(0.1 * nrow(train))
+smp_size2 <- floor(0.1 * nrow(test))
+
+
+set.seed(123)
+train_ind <- sample(seq_len(nrow(train)), size = smp_size1)
+test_ind <- sample(seq_len(nrow(test)), size = smp_size2)
+
+train2 <- train[train_ind, ]
+test2 <- test[test_ind, ]
+nrow(train2)
+nrow(test2)
+
+# cr?ation d'une colonne indicatrice train test avant assemblage des deux tables
+train2$datasplit<-"train" ; test2$datasplit<-"test"
 
 # suppression d'une colonne visiblement inutile -> n'existait pas dans nos datasets
-train$campaignCode<-NULL ; test$campaignCode<-NULL
+train2$campaignCode<-NULL ; test2$campaignCode<-NULL
 
 # identification des 4 colonnes au format json
 json<-c("trafficSource","totals","geoNetwork","device")
@@ -27,8 +45,8 @@ for (t in tables) {
   if(t=="train") result$campaignCode<-NULL else result$transactionRevenue<-NA
   glob<-rbind(glob,result)
 }
-#Liberer l'espace alloué a partiel, train et test
-rm(partiel, train, test) ; gc()
+#Liberer l'espace allou? a partiel, train et test
+rm(partiel, train, test, train2, test2) ; gc()
 
 
 
@@ -46,11 +64,18 @@ glob <- transform(glob, transactionRevenue = as.integer(transactionRevenue))
 # 
 glob <- transform(glob, socialEngagementType = as.integer(as.logical(socialEngagementType)))
 
-# On commence par regarde les donnees à notre disposition :
+# On commence par regarde les donnees ï¿½ notre disposition :
 summary(glob)
 str(glob)
 
-# On commence par supprimer les donnes inexistantes de notre dataset pour alléger le poids :
+# On commence par supprimer les donnes inexistantes de notre dataset pour allï¿½ger le poids :
+glob[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
+names(glob)
+str(glob)
+
+head(glob)
+
+# On commence par supprimer les donnes inexistantes de notre dataset pour allÃ©ger le poids :
 glob[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
 names(glob)
 str(glob)
