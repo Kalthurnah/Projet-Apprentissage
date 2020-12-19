@@ -33,7 +33,8 @@ train2$campaignCode<-NULL ; test2$campaignCode<-NULL
 # identification des 4 colonnes au format json
 json<-c("trafficSource","totals","geoNetwork","device")
 tables<-c("train2","test2")
-glob<-data.table() #table vide qui va recuperer les tableas transformees
+train3 <- data.table()
+test3 <- data.table()
 # lecture et transformation successive train et test (suppression au passage de colonnes inutiles) 
 for (t in tables) {
   partiel<-get(t)[,setdiff(names(get(t)),json)] # colonnes non json
@@ -42,8 +43,14 @@ for (t in tables) {
   partiel$adwordsClickInfo<-NULL
   temp$targetingCriteria<-NULL
   result<-as.data.table(cbind(partiel,temp))
-  if(t=="train") result$campaignCode<-NULL else result$transactionRevenue<-NA
-  glob<-rbind(glob,result)
+  if(t=="train2"){
+    result$campaignCode<-NULL
+    train3<- rbind(train3, result)
+    }
+  else {
+    result$transactionRevenue<-NA
+    test3 <- rbind(test3, result)
+    }
 }
 #Liberer l'espace allou? a partiel, train et test
 rm(partiel, train, test, train2, test2) ; gc()
@@ -51,34 +58,38 @@ rm(partiel, train, test, train2, test2) ; gc()
 
 
 #Si le test et le train sont dans le meme table c'est pour qu'on split nous meme
-head(glob)
+head(train3)
+head(test3)
 
-summary(glob) 
+summary(train3) 
+summary(test3) 
 
 #Changer date en date
-glob <- transform(glob, date = as.Date(as.character(date), "%Y%m%d"))
+train3 <- transform(train3, date = as.Date(as.character(date), "%Y%m%d"))
+test3 <- transform(test3, date = as.Date(as.character(date), "%Y%m%d"))
 
 # transactionRevenue en int
-glob <- transform(glob, transactionRevenue = as.integer(transactionRevenue))
+train3 <- transform(train3, transactionRevenue = as.integer(transactionRevenue))
+test3 <- transform(test3, transactionRevenue = as.integer(transactionRevenue))
 
 # 
-glob <- transform(glob, socialEngagementType = as.integer(as.logical(socialEngagementType)))
+train3 <- transform(train3, socialEngagementType = as.integer(as.logical(socialEngagementType)))
+test3 <- transform(test3, socialEngagementType = as.integer(as.logical(socialEngagementType)))
 
 # On commence par regarde les donnees � notre disposition :
-summary(glob)
-str(glob)
+summary(train3)
+str(train3)
+summary(test3)
+str(test3)
 
 # On commence par supprimer les donnes inexistantes de notre dataset pour all�ger le poids :
-glob[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
-names(glob)
-str(glob)
+train3[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
+test3[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
+names(train3)
+names(test3)
+str(train3)
+str(test3)
 
-head(glob)
-
-# On commence par supprimer les donnes inexistantes de notre dataset pour alléger le poids :
-glob[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
-names(glob)
-str(glob)
 
 
 # Utilisons GBM :
@@ -95,9 +106,10 @@ registerDoParallel(cl)
 require(dismo)
 require(gbm)
 
+
 set.seed(92)
 
-gbm.step(glob, gbm.x = which(names(glob) != "transactionRevenue"), gbm.y = which(names(glob) =="transactionRevenue"),
+gbm.step(glob, gbm.x = train3, gbm.y = test3,
          offset = NULL, fold.vector = NULL, tree.complexity = 5,
          learning.rate = 0.01, bag.fraction = 0.75,
          var.monotone = rep(0, length(gbm.x)), n.folds = 10, prev.stratify = TRUE, 
@@ -105,3 +117,5 @@ gbm.step(glob, gbm.x = which(names(glob) != "transactionRevenue"), gbm.y = which
          tolerance.method = "auto", tolerance = 0.001, plot.main = TRUE, plot.folds = FALSE,
          verbose = TRUE, silent = FALSE, keep.fold.models = FALSE, keep.fold.vector = FALSE, 
          keep.fold.fit = FALSE)
+
+
