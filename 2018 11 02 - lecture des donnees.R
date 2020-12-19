@@ -1,19 +1,21 @@
-setwd(" ....")
+setwd("D:/ESILV/5A/Apprentissage")
+
 require(jsonlite) 
 require(data.table)
-
-#lecture des données
+#lecture des donneees
 train<-read.csv("train.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 test<-read.csv("test.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
-# création d'une colonne indicatrice train test avant assemblage des deux tables
-train$datasplit<-"train" 
-test$datasplit<-"test"
-# suppression d'une colonne visiblement inutile
+
+# cr�ation d'une colonne indicatrice train test avant assemblage des deux tables
+train$datasplit<-"train" ; test$datasplit<-"test"
+
+# suppression d'une colonne visiblement inutile -> n'existait pas dans nos datasets
 train$campaignCode<-NULL ; test$campaignCode<-NULL
+
 # identification des 4 colonnes au format json
 json<-c("trafficSource","totals","geoNetwork","device")
 tables<-c("train","test")
-glob<-data.table() #table vide qui va récupérer les tableas transformées
+glob<-data.table() #table vide qui va recuperer les tableas transformees
 # lecture et transformation successive train et test (suppression au passage de colonnes inutiles) 
 for (t in tables) {
   partiel<-get(t)[,setdiff(names(get(t)),json)] # colonnes non json
@@ -25,15 +27,24 @@ for (t in tables) {
   if(t=="train") result$campaignCode<-NULL else result$transactionRevenue<-NA
   glob<-rbind(glob,result)
 }
+#Liberer l'espace allou� a partiel, train et test
 rm(partiel, train, test) ; gc()
 
 
 
-summary(train)
-colnames(train)
-head(train,5)
+#Si le test et le train sont dans le meme table c'est pour qu'on split nous meme
+head(glob)
 
-# On converti le format date qui ne convient pas
-train$new_date <- as.Date(as.character(train$date), "%Y%m%d")
-summary(train)
+summary(glob) 
 
+#Changer date en date
+glob <- transform(glob, date = as.Date(as.character(date), "%Y%m%d"))
+
+# transactionRevenue en int
+glob <- transform(glob, transactionRevenue = as.integer(transactionRevenue))
+
+# 
+glob <- transform(glob, socialEngagementType = as.integer(as.logical(socialEngagementType)))
+
+
+head(glob)
