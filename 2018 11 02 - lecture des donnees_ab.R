@@ -1,33 +1,15 @@
-setwd("")
-
+setwd("C:\Users\Alexandre\Documents\apprentissage")
 require(jsonlite) 
 require(data.table)
-library(caTools)
 #lecture des donneees
 train<-read.csv("train.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 test<-read.csv("test.csv",stringsAsFactors = FALSE,colClasses=c("character","integer","character","character","character","character","character","character","character","integer","integer","integer")) ; 
 
-#on réduit le dataset pour diminuer les temps d'importation
-nrow(train)
-nrow(test)
-smp_size1 <- floor(0.1 * nrow(train))
-smp_size2 <- floor(0.1 * nrow(test))
-
-
-set.seed(123)
-train_ind <- sample(seq_len(nrow(train)), size = smp_size1)
-test_ind <- sample(seq_len(nrow(test)), size = smp_size2)
-
-train2 <- train[train_ind, ]
-test2 <- test[test_ind, ]
-nrow(train2)
-nrow(test2)
-
 # cr?ation d'une colonne indicatrice train test avant assemblage des deux tables
-train2$datasplit<-"train" ; test2$datasplit<-"test"
+train$datasplit<-"train" ; test$datasplit<-"test"
 
 # suppression d'une colonne visiblement inutile -> n'existait pas dans nos datasets
-train2$campaignCode<-NULL ; test2$campaignCode<-NULL
+train$campaignCode<-NULL ; test$campaignCode<-NULL
 
 # identification des 4 colonnes au format json
 json<-c("trafficSource","totals","geoNetwork","device")
@@ -45,14 +27,14 @@ for (t in tables) {
   glob<-rbind(glob,result)
 }
 #Liberer l'espace allou? a partiel, train et test
-rm(partiel, train, test, train2, test2) ; gc()
+rm(partiel, train, test) ; gc()
 
 
 
 #Si le test et le train sont dans le meme table c'est pour qu'on split nous meme
 head(glob)
 
-summary(glob) 
+
 
 #Changer date en date
 glob <- transform(glob, date = as.Date(as.character(date), "%Y%m%d"))
@@ -62,16 +44,4 @@ glob <- transform(glob, transactionRevenue = as.integer(transactionRevenue))
 
 # 
 glob <- transform(glob, socialEngagementType = as.integer(as.logical(socialEngagementType)))
-
-
-head(glob)
-
-
-
-# On commence par supprimer les donnes inexistantes de notre dataset pour alléger le poids :
-glob[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserSize", "networkLocation", "criteriaParameters","screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
-names(glob)
-str(glob)
-
-
 
