@@ -1,4 +1,4 @@
-setwd("....")
+setwd("D:/ESILV/5A/Apprentissage")
 
 require(jsonlite) 
 require(data.table)
@@ -46,5 +46,12 @@ glob <- transform(glob, transactionRevenue = as.integer(transactionRevenue))
 # 
 glob <- transform(glob, socialEngagementType = as.integer(as.logical(socialEngagementType)))
 
+# On commence par regarde les donnees à notre disposition :
+summary(glob)
+str(glob)
 
-head(glob)
+# On commence par supprimer les donnes inexistantes de notre dataset pour alléger le poids :
+glob[,c("screenResolution", "screenColors", "latitude", "longitude", "language", "flashVersion", "mobileDeviceMarketingName", "mobileDeviceInfo", "mobileDeviceModel", "mobileInputSelector", "obileDeviceBranding"):=NULL]
+names(glob)
+
+
