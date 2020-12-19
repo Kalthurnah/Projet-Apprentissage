@@ -109,7 +109,7 @@ require(gbm)
 
 set.seed(92)
 
-gbm.step(glob, gbm.x = train3, gbm.y = test3,
+gbm.step(train3, gbm.x = which(names(train3) != "transactionRevenue"), gbm.y = which(names(train3) == "transactionRevenue"),
          offset = NULL, fold.vector = NULL, tree.complexity = 5,
          learning.rate = 0.01, bag.fraction = 0.75,
          var.monotone = rep(0, length(gbm.x)), n.folds = 10, prev.stratify = TRUE, 
