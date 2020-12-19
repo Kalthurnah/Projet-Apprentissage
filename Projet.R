@@ -15,7 +15,7 @@ smp_size1 <- floor(0.1 * nrow(train))
 smp_size2 <- floor(0.1 * nrow(test))
 
 
-set.seed(123)
+set.seed(92)
 train_ind <- sample(seq_len(nrow(train)), size = smp_size1)
 test_ind <- sample(seq_len(nrow(test)), size = smp_size2)
 
@@ -32,7 +32,7 @@ train2$campaignCode<-NULL ; test2$campaignCode<-NULL
 
 # identification des 4 colonnes au format json
 json<-c("trafficSource","totals","geoNetwork","device")
-tables<-c("train","test")
+tables<-c("train2","test2")
 glob<-data.table() #table vide qui va recuperer les tableas transformees
 # lecture et transformation successive train et test (suppression au passage de colonnes inutiles) 
 for (t in tables) {
