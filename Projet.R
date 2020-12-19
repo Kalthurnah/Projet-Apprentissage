@@ -55,3 +55,28 @@ glob[,c("cityId", "metro", "operatingSystemVersion", "browserVersion", "browserS
 names(glob)
 str(glob)
 
+
+# Utilisons GBM :
+
+library(doParallel)
+#Find out how many cores are available (if you don't already know)
+cores<-detectCores()
+#Create cluster with desired number of cores, leave one open for the machine         
+#core processes
+cl <- makeCluster(cores[1]-1)
+#Register cluster
+registerDoParallel(cl)
+
+require(dismo)
+require(gbm)
+
+set.seed(92)
+
+gbm.step(glob, gbm.x = which(names(glob) != "transactionRevenue"), gbm.y = which(names(glob) =="transactionRevenue"),
+         offset = NULL, fold.vector = NULL, tree.complexity = 5,
+         learning.rate = 0.01, bag.fraction = 0.75,
+         var.monotone = rep(0, length(gbm.x)), n.folds = 10, prev.stratify = TRUE, 
+         family = "gaussian", n.trees = 50, step.size = 50, max.trees = 10000,
+         tolerance.method = "auto", tolerance = 0.001, plot.main = TRUE, plot.folds = FALSE,
+         verbose = TRUE, silent = FALSE, keep.fold.models = FALSE, keep.fold.vector = FALSE, 
+         keep.fold.fit = FALSE)
