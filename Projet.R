@@ -157,7 +157,7 @@ cor(train[, x1,with = FALSE], train[[y1]])
 #regardons pour les colonnes non-num�ric (date, chanelGrouping, campaign, source, medium, continent,operatingSystem, isMobile, deviceCategory" ) : 
 m_v1 = model.matrix(~ transactionRevenue - 1, train)
 m_v2 = model.matrix(~ date - 1, train)
-m_v3 = model.matrix(~ chanelGrouping - 1, train)
+m_v3 = model.matrix(~ channelGrouping - 1, train)
 m_v4 = model.matrix(~ campaign + date - 1, train)
 m_v5 = model.matrix(~ source - 1, train)
 m_v6 = model.matrix(~ medium - 1, train)
