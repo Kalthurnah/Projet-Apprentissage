@@ -1,5 +1,5 @@
 
-setwd("")
+setwd("D:/ESILV/5A/Apprentissage")
 
 require(jsonlite) 
 require(data.table)
@@ -46,13 +46,6 @@ summary(glob2)
 #Si le test et le train sont dans le meme table c'est pour qu'on split nous meme
 summary(glob)
 # En analysant le summary on observe plusieurs besoin ???vident pour le pr???processing
-
-
-
-##### pour moi , ??? retirer
-glob2 = glob
-
-summary(glob2)
 
 
 ##Pre-processing
@@ -132,22 +125,13 @@ date_split<- ymd("20170601")
 set.seed(123)
 train_index <- sample(seq_len(nrow(glob)))
 
-train = glob3[train_index,]
-test = glob3[-train_index,]
+train = glob[train_index,]
+test = glob[-train_index,]
 val = train[train$date >= date_split,]
 train = train[train$date < date_split,]
 
 
 # Utilisons GBM :
-
-library(doParallel)
-#Find out how many cores are available (if you don't already know)
-cores<-detectCores()
-#Create cluster with desired number of cores, leave one open for the machine         
-#core processes
-cl <- makeCluster(cores[1]-1)
-#Register cluster
-registerDoParallel(cl)
 
 require(dismo)
 require(gbm)
@@ -155,12 +139,30 @@ require(gbm)
 
 set.seed(92)
 
-gbm.step(train3, gbm.x = which(names(train3) != "transactionRevenue"), gbm.y = which(names(train3) == "transactionRevenue"),
-         offset = NULL, fold.vector = NULL, tree.complexity = 5,
-         learning.rate = 0.01, bag.fraction = 0.75,
-         var.monotone = rep(0, length(gbm.x)), n.folds = 10, prev.stratify = TRUE, 
-         family = "gaussian", n.trees = 50, step.size = 50, max.trees = 10000,
-         tolerance.method = "auto", tolerance = 0.001, plot.main = TRUE, plot.folds = FALSE,
-         verbose = TRUE, silent = FALSE, keep.fold.models = FALSE, keep.fold.vector = FALSE, 
-         keep.fold.fit = FALSE)
+summary(train)
+
+numVars <- c("visits", "hits", "bounces", "pageviews", "newVisits")
+train[, numVars] <- lapply(train[, c("visits", "hits", "bounces", "pageviews", "newVisits")], as.numeric)
+train$transactionRevenue <- as.numeric(train$transactionRevenue)
+val[, numVars] <- lapply(val[, c("visits", "hits", "bounces", "pageviews", "newVisits")], as.numeric)
+train$fullVisitorIdNum <- as.numeric(train$fullVisitorId)
+val$fullVisitorIdNum <- as.numeric(val$fullVisitorId)
+
+str(train)
+train_num <- train[,c(6,7,8,16,17,18,19,20,21,33)]
+str(train_num)
+
+
+gbm.fit <- gbm(
+  formula = train$transactionRevenue ~ .,
+  distribution = "gaussian",
+  data = train_num)
+
+best.iter <- gbm.perf(gbm.fit)
+print(best.iter)
+
+summary(gbm.fit)
+
+pred <- predict(gbm.fit, n.trees = best.iter, val)
+
 
