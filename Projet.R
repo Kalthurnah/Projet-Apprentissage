@@ -156,13 +156,17 @@ str(train_num)
 gbm.fit <- gbm(
   formula = train$transactionRevenue ~ .,
   distribution = "gaussian",
-  data = train_num)
+  data = train_num,
+  n.trees = 1000,
+  shrinkage = 0.001)
 
 best.iter <- gbm.perf(gbm.fit)
 print(best.iter)
 
 summary(gbm.fit)
 
+
 pred <- predict(gbm.fit, n.trees = best.iter, val)
 
+caret::RMSE(pred, val$transactionRevenue)
 
